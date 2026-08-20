@@ -16,10 +16,9 @@ const app = express();
 // Apply security headers
 app.use(helmet());
 
-// Apply CORS options
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+// Apply CORS options (allow requests from any client origin)
 app.use(cors({
-  origin: clientUrl,
+  origin: true,
   credentials: true,
 }));
 
