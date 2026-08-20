@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const socketURL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const socketURL = import.meta.env.VITE_SOCKET_URL || 'https://milk-dairy-4bi2.onrender.com';
 
 /**
  * Creates an un-connected Socket.IO client instance.

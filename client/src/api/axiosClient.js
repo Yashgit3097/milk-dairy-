@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const apiURL = import.meta.env.VITE_API_URL || 'https://milk-dairy-4bi2.onrender.com/api';
 
 const axiosClient = axios.create({
   baseURL: apiURL,
