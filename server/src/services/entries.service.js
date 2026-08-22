@@ -120,6 +120,8 @@ export async function addMilk(customerId, ml, shift = 'morning', dateString) {
     title: `${shiftLabel} Milk Recorded`,
     body: `Milk Diary: ${qtyLiters} L ${shiftLabel} milk added for ${targetDate}`,
     tag: `milk-added-${targetDate}-${activeShift}`,
+    icon: '/web-app-manifest-192x192.png',
+    badge: '/badge-96x96.png',
   }).catch((err) => console.error('[Push Trigger] Push notification failed:', err.message));
 
   return savedEntry;

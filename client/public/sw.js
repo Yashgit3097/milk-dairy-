@@ -11,10 +11,12 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: '/logo.png',
-    badge: '/logo.png',
+    icon: data.icon || '/web-app-manifest-192x192.png',
+    badge: data.badge || '/badge-96x96.png',
     tag: data.tag || 'milk-diary-notification',
+    vibrate: [200, 100, 200],
     renotify: true,
+    data: data,
   };
 
   console.log('[Service Worker] Received push event:', data);
