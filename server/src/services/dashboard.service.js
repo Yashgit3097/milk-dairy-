@@ -33,7 +33,10 @@ export async function getOverviewData() {
 
     // Today's totals
     const daysData = entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days;
-    const qty = daysData[dayKey] || 0;
+    const rawDay = daysData[dayKey];
+    const morningQty = typeof rawDay === 'number' ? rawDay : (rawDay?.morning || 0);
+    const eveningQty = typeof rawDay === 'object' ? (rawDay?.evening || 0) : 0;
+    const qty = morningQty + eveningQty;
     if (qty > 0) {
       todayMl += qty;
       todayDeliveredCount++;
@@ -62,7 +65,10 @@ export async function getOverviewData() {
     const entry = entriesByCustomerId[cust._id.toString()];
     if (entry) {
       const daysData = entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days;
-      const qty = daysData[dayKey] || 0;
+      const rawDay = daysData[dayKey];
+      const morningQty = typeof rawDay === 'number' ? rawDay : (rawDay?.morning || 0);
+      const eveningQty = typeof rawDay === 'object' ? (rawDay?.evening || 0) : 0;
+      const qty = morningQty + eveningQty;
       if (qty > 0) {
         areaMap[area].totalLiters += qty / 1000;
         areaMap[area].deliveredCount++;
@@ -85,7 +91,10 @@ export async function getOverviewData() {
       const daysData = entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days;
       const dayKeys = Object.keys(daysData).map(Number).sort((a, b) => b - a);
       const latestDay = dayKeys[0] || dayKey;
-      const latestQty = daysData[String(latestDay)] || 0;
+      const rawLatest = daysData[String(latestDay)];
+      const mQty = typeof rawLatest === 'number' ? rawLatest : (rawLatest?.morning || 0);
+      const eQty = typeof rawLatest === 'object' ? (rawLatest?.evening || 0) : 0;
+      const latestQty = mQty + eQty;
 
       return {
         id: entry._id,

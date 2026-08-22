@@ -118,7 +118,17 @@ export default function Billing() {
   const getSortedDays = (days = {}) => {
     const daysData = days instanceof Map ? Object.fromEntries(days) : days;
     return Object.entries(daysData)
-      .map(([day, ml]) => ({ day: Number(day), ml }))
+      .map(([day, val]) => {
+        const morning = typeof val === 'number' ? val : (val?.morning || 0);
+        const evening = typeof val === 'object' ? (val?.evening || 0) : 0;
+        return {
+          day: Number(day),
+          morning,
+          evening,
+          totalMl: morning + evening,
+        };
+      })
+      .filter((d) => d.totalMl > 0)
       .sort((a, b) => a.day - b.day);
   };
 
@@ -260,32 +270,39 @@ export default function Billing() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50 font-bold text-slate-550">
-                        <th className="py-2.5 px-4">Date</th>
-                        <th className="py-2.5 px-4 text-center">Delivered Quantity</th>
-                        <th className="py-2.5 px-4 text-right">Rate</th>
-                        <th className="py-2.5 px-4 text-right">Amount</th>
+                        <th className="py-2.5 px-3">Date</th>
+                        <th className="py-2.5 px-3 text-center">Morning</th>
+                        <th className="py-2.5 px-3 text-center">Evening</th>
+                        <th className="py-2.5 px-3 text-center font-extrabold text-slate-800">Total (L)</th>
+                        <th className="py-2.5 px-3 text-right">Rate</th>
+                        <th className="py-2.5 px-3 text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-650">
                       {getSortedDays(activeBill.entry.days).map((dayObj) => {
                         const dateStr = `${activeBill.month}-${String(dayObj.day).padStart(2, '0')}`;
-                        const litersStr = dayObj.ml >= 1000 ? `${dayObj.ml / 1000} L` : `${dayObj.ml} ml`;
+                        const morningStr = dayObj.morning > 0 ? `${(dayObj.morning / 1000).toFixed(2)} L` : '-';
+                        const eveningStr = dayObj.evening > 0 ? `${(dayObj.evening / 1000).toFixed(2)} L` : '-';
+                        const totalLitersStr = `${(dayObj.totalMl / 1000).toFixed(2)} L`;
+                        
                         // Price calculation
                         const rateUsed = activeBill.customer.pricePerLiter || 60; // fallbacks to 60 if not specified
-                        const amount = (dayObj.ml / 1000) * rateUsed;
+                        const amount = (dayObj.totalMl / 1000) * rateUsed;
 
                         return (
                           <tr key={dayObj.day}>
-                            <td className="py-2.5 px-4">{new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                            <td className="py-2.5 px-4 text-center font-bold text-slate-800">{litersStr}</td>
-                            <td className="py-2.5 px-4 text-right text-slate-500">₹{rateUsed.toFixed(2)}</td>
-                            <td className="py-2.5 px-4 text-right font-extrabold text-slate-800">₹{amount.toFixed(2)}</td>
+                            <td className="py-2.5 px-3">{new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                            <td className="py-2.5 px-3 text-center font-semibold text-slate-700">{morningStr}</td>
+                            <td className="py-2.5 px-3 text-center font-semibold text-slate-700">{eveningStr}</td>
+                            <td className="py-2.5 px-3 text-center font-extrabold text-slate-900">{totalLitersStr}</td>
+                            <td className="py-2.5 px-3 text-right text-slate-500">₹{rateUsed.toFixed(2)}</td>
+                            <td className="py-2.5 px-3 text-right font-extrabold text-slate-800">₹{amount.toFixed(2)}</td>
                           </tr>
                         );
                       })}
                       {getSortedDays(activeBill.entry.days).length === 0 && (
                         <tr>
-                          <td colSpan="4" className="py-8 text-center text-slate-400 font-medium">
+                          <td colSpan="6" className="py-8 text-center text-slate-400 font-medium">
                             No daily milk delivery logs recorded for this month.
                           </td>
                         </tr>

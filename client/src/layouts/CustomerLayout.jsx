@@ -1,8 +1,20 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { Milk } from 'lucide-react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { Milk, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CustomerLayout() {
+  const { isAuthenticated, isCustomer, logout } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const handleLogout = () => {
+    queryClient.clear();
+    logout();
+    navigate('/customer/activation', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-850 flex flex-col font-sans">
       {/* Mobile-first Header */}
@@ -17,9 +29,21 @@ export default function CustomerLayout() {
               <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Customer Portal</span>
             </div>
           </div>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 border border-indigo-100 text-indigo-600">
-            Live Link
-          </span>
+          
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 border border-indigo-100 text-indigo-600">
+              Live Link
+            </span>
+            {isAuthenticated && isCustomer && (
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent transition-all cursor-pointer"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

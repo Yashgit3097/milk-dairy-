@@ -52,7 +52,7 @@ export async function getCardByMonth(req, res, next) {
 
 export async function quickAdd(req, res, next) {
   try {
-    const { customerId, ml, date } = req.body;
+    const { customerId, ml, shift, date } = req.body;
 
     if (!customerId || ml === undefined) {
       return res.status(400).json({
@@ -62,8 +62,9 @@ export async function quickAdd(req, res, next) {
       });
     }
 
+    const resolvedShift = shift === 'evening' ? 'evening' : 'morning';
     const resolvedDate = date || new Date().toLocaleDateString('en-CA');
-    const entry = await entriesService.addMilk(customerId, ml, resolvedDate);
+    const entry = await entriesService.addMilk(customerId, ml, resolvedShift, resolvedDate);
 
     // Broadcast Socket.IO update
     const io = req.app.get('io');
@@ -71,7 +72,9 @@ export async function quickAdd(req, res, next) {
       const socketPayload = {
         customerId,
         date: resolvedDate,
+        shift: resolvedShift,
         ml,
+        entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
         monthTotals: {
           totalMl: entry.totalMl,
           totalAmount: entry.totalAmount,
@@ -80,7 +83,9 @@ export async function quickAdd(req, res, next) {
       io.to('admin').emit('milk:added', socketPayload);
       io.to(`customer:${customerId}`).emit('milk:added', {
         date: resolvedDate,
+        shift: resolvedShift,
         ml,
+        entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
         monthTotals: {
           totalMl: entry.totalMl,
           totalAmount: entry.totalAmount,
@@ -101,10 +106,10 @@ export async function quickAdd(req, res, next) {
 export async function undo(req, res, next) {
   try {
     const { customerId } = req.params;
-    const { date } = req.query; // get date query if provided
+    const { date, shift } = req.query; // get date and shift query if provided
 
     const resolvedDate = date || new Date().toLocaleDateString('en-CA');
-    const entry = await entriesService.undoLastMilk(customerId, resolvedDate);
+    const entry = await entriesService.undoLastMilk(customerId, shift, resolvedDate);
 
     // Broadcast Socket.IO removal update
     const io = req.app.get('io');
@@ -112,6 +117,8 @@ export async function undo(req, res, next) {
       const socketPayload = {
         customerId,
         date: resolvedDate,
+        shift,
+        entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
         monthTotals: {
           totalMl: entry.totalMl,
           totalAmount: entry.totalAmount,
@@ -120,6 +127,8 @@ export async function undo(req, res, next) {
       io.to('admin').emit('milk:removed', socketPayload);
       io.to(`customer:${customerId}`).emit('milk:removed', {
         date: resolvedDate,
+        shift,
+        entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
         monthTotals: {
           totalMl: entry.totalMl,
           totalAmount: entry.totalAmount,

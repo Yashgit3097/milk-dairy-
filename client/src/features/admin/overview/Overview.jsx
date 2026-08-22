@@ -99,9 +99,11 @@ export default function Overview() {
       queryClient.invalidateQueries(['dashboard-overview']);
       
       // Show temporary pop-up notification alert on the page
+      const shiftName = data.shift === 'evening' ? 'Evening' : (data.shift === 'morning' ? 'Morning' : '');
+      const actionText = data.ml ? `marked ${data.ml / 1000} L ${shiftName ? `(${shiftName})` : ''}` : 'updated';
       const newAlert = {
         id: Date.now(),
-        message: `${data.customerName || 'A customer'} was marked ${data.ml / 1000} L`,
+        message: `${data.customerName || 'A customer'} was ${actionText}`,
       };
       setLiveAlerts((prev) => [newAlert, ...prev].slice(0, 3));
       

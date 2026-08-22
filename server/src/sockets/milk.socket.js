@@ -37,18 +37,21 @@ export default function registerMilkSocket(io) {
           return ack?.({ success: false, error: 'Unauthorized. Only admins can record deliveries.' });
         }
 
-        const { customerId, ml, date } = data;
+        const { customerId, ml, shift, date } = data;
         if (!customerId || ml === undefined) {
           return ack?.({ success: false, error: 'Missing customerId or quantity.' });
         }
 
+        const resolvedShift = shift === 'evening' ? 'evening' : 'morning';
         const resolvedDate = date || new Date().toLocaleDateString('en-CA');
-        const entry = await entriesService.addMilk(customerId, ml, resolvedDate);
+        const entry = await entriesService.addMilk(customerId, ml, resolvedShift, resolvedDate);
 
         const socketPayload = {
           customerId,
           date: resolvedDate,
+          shift: resolvedShift,
           ml,
+          entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
           monthTotals: {
             totalMl: entry.totalMl,
             totalAmount: entry.totalAmount,
@@ -60,7 +63,9 @@ export default function registerMilkSocket(io) {
         
         io.to(`customer:${customerId}`).emit('milk:added', {
           date: resolvedDate,
+          shift: resolvedShift,
           ml,
+          entryDays: entry.days instanceof Map ? Object.fromEntries(entry.days) : entry.days,
           monthTotals: {
             totalMl: entry.totalMl,
             totalAmount: entry.totalAmount,

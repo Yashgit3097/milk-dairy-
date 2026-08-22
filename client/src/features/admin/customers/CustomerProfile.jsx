@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, User, Phone, MapPin, KeyRound, Receipt, Loader2, AlertCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, KeyRound, Receipt, Loader2, AlertCircle, Calendar, Copy } from 'lucide-react';
 import { customerApi } from '../../../api/customerApi';
 import MonthlyCard from '../../../components/MonthlyCard/MonthlyCard';
 
@@ -28,6 +28,7 @@ function CustomerProfileSkeleton() {
 
 export default function CustomerProfile() {
   const { id } = useParams();
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Query customer details
   const {
@@ -136,9 +137,23 @@ export default function CustomerProfile() {
                 <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
                   <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider leading-none mb-1">Activation Code</span>
-                  <code className="bg-indigo-50 border border-indigo-100/50 px-2.5 py-1 rounded-lg text-indigo-650 font-mono font-bold text-xs shadow-sm">
-                    {customer.activationCode}
-                  </code>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="bg-slate-900 text-cyan-300 border border-slate-700 px-3 py-1 rounded-lg font-mono font-bold text-xs shadow-sm select-all">
+                      {customer.activationCode}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(customer.activationCode);
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg shadow-sm cursor-pointer transition-all active:scale-95"
+                      title="Copy code"
+                    >
+                      <Copy className="w-3 h-3 text-white" />
+                      <span>{copiedCode ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  </div>
                   <span className="text-[9px] text-slate-400 block mt-1.5 font-medium leading-none">
                     {customer.isActivated ? 'Activated by consumer' : 'Awaiting first-time login'}
                   </span>

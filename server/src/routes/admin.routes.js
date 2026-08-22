@@ -11,7 +11,7 @@ const router = express.Router();
 // Public login route with rate limiting and input validation
 router.post(
   '/login',
-  rateLimiter({ windowMs: 15 * 60 * 1000, max: 5 }),
+  rateLimiter({ windowMs: 15 * 60 * 1000, max: 50 }),
   validate({ body: loginSchema }),
   login
 );

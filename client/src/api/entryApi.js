@@ -4,8 +4,10 @@ export const entryApi = {
   quickAdd: async (payload) => {
     return axiosClient.post('/entries/quick-add', payload);
   },
-  undo: async (customerId, date) => {
-    const params = date ? { date } : {};
+  undo: async (customerId, date, shift) => {
+    const params = {};
+    if (date) params.date = date;
+    if (shift) params.shift = shift;
     return axiosClient.delete(`/entries/${customerId}/undo`, { params });
   },
   getByMonthForAll: async (month) => {

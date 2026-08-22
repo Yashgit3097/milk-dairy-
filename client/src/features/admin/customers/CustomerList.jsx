@@ -175,14 +175,19 @@ export default function CustomerList() {
                       </td>
                       <td className="py-4 px-6 text-slate-600 font-semibold">{c.area}</td>
                       <td className="py-4 px-6">
-                        <button
-                          onClick={() => handleCopyCode(c.activationCode)}
-                          className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100/70 border border-indigo-100 text-indigo-600 font-mono font-bold text-xs px-2.5 py-1 rounded-lg shadow-sm cursor-pointer transition-colors active:scale-[0.98]"
-                          title="Click to copy code"
-                        >
-                          <span>{c.activationCode}</span>
-                          <span className="text-[8px] bg-indigo-650 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Copy</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-slate-900 text-cyan-300 font-mono font-bold text-xs px-2.5 py-1 rounded-lg border border-slate-700 select-all shadow-sm">
+                            {c.activationCode}
+                          </code>
+                          <button
+                            onClick={() => handleCopyCode(c.activationCode)}
+                            className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg shadow-sm cursor-pointer transition-all active:scale-95"
+                            title="Click to copy code"
+                          >
+                            <Copy className="w-3 h-3 text-white" />
+                            <span>{copiedCode === c.activationCode ? 'Copied!' : 'Copy'}</span>
+                          </button>
+                        </div>
                         <span className="block text-[9px] text-slate-400 mt-1.5 leading-none">
                           {c.isActivated ? 'Activated' : 'Pending Activation'}
                         </span>
@@ -275,14 +280,19 @@ export default function CustomerList() {
                 <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-4">
                   <div>
                     <span className="text-[9px] text-slate-450 block uppercase font-bold tracking-wider leading-none mb-1">Activation Code</span>
-                    <button
-                      onClick={() => handleCopyCode(c.activationCode)}
-                      className="mt-1.5 flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100/70 border border-indigo-100 text-indigo-650 text-[11px] font-mono font-bold rounded-lg shadow-sm cursor-pointer transition-colors active:scale-[0.98]"
-                      title="Click to copy code"
-                    >
-                      <span>{c.activationCode}</span>
-                      <span className="text-[8px] bg-indigo-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">Copy</span>
-                    </button>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="bg-slate-900 text-cyan-300 font-mono font-bold text-xs px-2 py-1 rounded-lg border border-slate-700 select-all shadow-sm">
+                        {c.activationCode}
+                      </code>
+                      <button
+                        onClick={() => handleCopyCode(c.activationCode)}
+                        className="flex items-center gap-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded-lg shadow-sm cursor-pointer transition-all active:scale-95"
+                        title="Click to copy code"
+                      >
+                        <Copy className="w-3 h-3 text-white" />
+                        <span>{copiedCode === c.activationCode ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
                     <span className="block text-[9px] text-slate-400 mt-1">
                       {c.isActivated ? 'Activated' : 'Pending activation'}
                     </span>

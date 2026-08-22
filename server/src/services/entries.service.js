@@ -53,12 +53,22 @@ export async function getCardByMonth(customerId, month) {
   return card;
 }
 
-export async function addMilk(customerId, ml, dateString) {
+export function normalizeDayEntry(raw) {
+  if (!raw) return { morning: 0, evening: 0 };
+  if (typeof raw === 'number') return { morning: raw, evening: 0 };
+  return {
+    morning: typeof raw.morning === 'number' ? raw.morning : 0,
+    evening: typeof raw.evening === 'number' ? raw.evening : 0,
+  };
+}
+
+export async function addMilk(customerId, ml, shift = 'morning', dateString) {
   // Resolve today's date in local format if not sent
   const targetDate = dateString || new Date().toLocaleDateString('en-CA'); // "YYYY-MM-DD" in local time
   const [year, month, day] = targetDate.split('-');
   const monthKey = `${year}-${month}`;
   const dayKey = String(Number(day)); // strip leading zeros for Map keys, e.g. "05" -> "5"
+  const activeShift = shift === 'evening' ? 'evening' : 'morning';
 
   const customer = await Customer.findById(customerId);
   if (!customer) {
@@ -76,19 +86,26 @@ export async function addMilk(customerId, ml, dateString) {
     });
   }
 
+  // Get existing day entry and update specific shift
+  const currentDayData = entry.days.get(dayKey);
+  const updatedDay = normalizeDayEntry(currentDayData);
+  updatedDay[activeShift] = ml;
+
   // Set quantity for specific day in map (idempotent overwrite)
-  entry.days.set(dayKey, ml);
+  entry.days.set(dayKey, updatedDay);
 
   // Recalculate totals
   let totalMl = 0;
   let totalAmount = 0;
-  for (const [day, qty] of entry.days.entries()) {
-    totalMl += qty || 0;
-    if (qty > 0) {
+  for (const [day, dayVal] of entry.days.entries()) {
+    const dayObj = normalizeDayEntry(dayVal);
+    const dayTotalMl = (dayObj.morning || 0) + (dayObj.evening || 0);
+    totalMl += dayTotalMl;
+    if (dayTotalMl > 0) {
       const paddedDay = String(day).padStart(2, '0');
       const dayDateString = `${entry.month}-${paddedDay}`;
       const resolvedRate = await resolveRateForDate(customer, dayDateString);
-      totalAmount += (qty / 1000) * resolvedRate;
+      totalAmount += (dayTotalMl / 1000) * resolvedRate;
     }
   }
   entry.totalMl = totalMl;
@@ -98,16 +115,17 @@ export async function addMilk(customerId, ml, dateString) {
 
   // Trigger push notifications to customer devices
   const qtyLiters = (ml / 1000).toFixed(2);
+  const shiftLabel = activeShift === 'evening' ? 'Evening' : 'Morning';
   sendPushNotification(customerId, {
-    title: 'Milk Delivery Recorded',
-    body: `Milk Diary: ${qtyLiters} L added for ${targetDate}`,
-    tag: `milk-added-${targetDate}`,
+    title: `${shiftLabel} Milk Recorded`,
+    body: `Milk Diary: ${qtyLiters} L ${shiftLabel} milk added for ${targetDate}`,
+    tag: `milk-added-${targetDate}-${activeShift}`,
   }).catch((err) => console.error('[Push Trigger] Push notification failed:', err.message));
 
   return savedEntry;
 }
 
-export async function undoLastMilk(customerId, dateString) {
+export async function undoLastMilk(customerId, shift, dateString) {
   const targetDate = dateString || new Date().toLocaleDateString('en-CA');
   const [year, month, day] = targetDate.split('-');
   const monthKey = `${year}-${month}`;
@@ -127,19 +145,34 @@ export async function undoLastMilk(customerId, dateString) {
     throw error;
   }
 
-  // Clear quantity for today (remove from map or set to 0)
-  entry.days.delete(dayKey);
+  if (shift && (shift === 'morning' || shift === 'evening')) {
+    const currentDayData = entry.days.get(dayKey);
+    if (currentDayData) {
+      const updatedDay = normalizeDayEntry(currentDayData);
+      updatedDay[shift] = 0;
+      if (updatedDay.morning === 0 && updatedDay.evening === 0) {
+        entry.days.delete(dayKey);
+      } else {
+        entry.days.set(dayKey, updatedDay);
+      }
+    }
+  } else {
+    // Clear entire day if no shift specified
+    entry.days.delete(dayKey);
+  }
 
   // Recalculate totals
   let totalMl = 0;
   let totalAmount = 0;
-  for (const [day, qty] of entry.days.entries()) {
-    totalMl += qty || 0;
-    if (qty > 0) {
+  for (const [day, dayVal] of entry.days.entries()) {
+    const dayObj = normalizeDayEntry(dayVal);
+    const dayTotalMl = (dayObj.morning || 0) + (dayObj.evening || 0);
+    totalMl += dayTotalMl;
+    if (dayTotalMl > 0) {
       const paddedDay = String(day).padStart(2, '0');
       const dayDateString = `${entry.month}-${paddedDay}`;
       const resolvedRate = await resolveRateForDate(customer, dayDateString);
-      totalAmount += (qty / 1000) * resolvedRate;
+      totalAmount += (dayTotalMl / 1000) * resolvedRate;
     }
   }
   entry.totalMl = totalMl;

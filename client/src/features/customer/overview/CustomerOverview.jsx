@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LogOut, Milk, Loader2, AlertCircle, Bell, BellOff, ArrowRight } from 'lucide-react';
 import { customerApi } from '../../../api/customerApi';
@@ -25,11 +26,18 @@ function CustomerOverviewSkeleton() {
 }
 
 export default function CustomerOverview() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { logout } = useAuth();
   const { socket } = useSocket();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [liveToast, setLiveToast] = useState(null);
+
+  const handleLogout = () => {
+    queryClient.clear();
+    logout();
+    navigate('/customer/activation', { replace: true });
+  };
 
   // Sync active push subscription state on mount
   useEffect(() => {
@@ -79,7 +87,8 @@ export default function CustomerOverview() {
       console.log('[Customer Socket] Milk delivery added:', payload);
       queryClient.invalidateQueries(['customer-me-overview']);
 
-      const newToast = `Delivery of ${(payload.ml / 1000).toFixed(2)} L marked!`;
+      const shiftName = payload.shift === 'evening' ? 'Evening' : 'Morning';
+      const newToast = `${shiftName} milk (${(payload.ml / 1000).toFixed(2)} L) marked!`;
       setLiveToast(newToast);
       setTimeout(() => setLiveToast(null), 5000);
     };
@@ -88,7 +97,8 @@ export default function CustomerOverview() {
       console.log('[Customer Socket] Milk delivery undone:', payload);
       queryClient.invalidateQueries(['customer-me-overview']);
       
-      setLiveToast('Today\'s milk delivery was removed.');
+      const shiftName = payload.shift === 'evening' ? 'Evening' : (payload.shift === 'morning' ? 'Morning' : "Today's");
+      setLiveToast(`${shiftName} milk delivery was removed.`);
       setTimeout(() => setLiveToast(null), 5000);
     };
 
@@ -116,7 +126,7 @@ export default function CustomerOverview() {
         <h3 className="font-bold text-slate-900">Failed to load overview</h3>
         <p className="text-xs text-rose-700">{error?.error || 'Diary entries could not be loaded.'}</p>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
         >
           Sign Out & retry
@@ -200,7 +210,7 @@ export default function CustomerOverview() {
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">{customer.area}</span>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-rose-50 hover:border-rose-100 text-slate-400 hover:text-rose-600 transition-colors shadow-sm cursor-pointer"
           title="Sign Out"
         >

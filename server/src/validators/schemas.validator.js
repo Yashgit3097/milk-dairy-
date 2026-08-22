@@ -20,6 +20,7 @@ export const quickAddSchema = z.object({
     message: 'Invalid customer ID format.',
   }),
   ml: z.number().min(0, { message: 'Quantity in ml must be a positive number.' }),
+  shift: z.enum(['morning', 'evening']).optional(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, {

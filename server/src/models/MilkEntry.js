@@ -14,7 +14,7 @@ const milkEntrySchema = new mongoose.Schema({
   },
   days: {
     type: Map,
-    of: Number, // Stores "day": quantityInMl (e.g., "5": 500, "6": 1000)
+    of: mongoose.Schema.Types.Mixed, // Stores "day": { morning: ml, evening: ml } or legacy number
     default: {},
   },
   totalMl: {
