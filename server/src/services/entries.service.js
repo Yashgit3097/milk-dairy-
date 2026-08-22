@@ -122,6 +122,7 @@ export async function addMilk(customerId, ml, shift = 'morning', dateString) {
     tag: `milk-added-${targetDate}-${activeShift}`,
     icon: '/web-app-manifest-192x192.png',
     badge: '/badge-96x96.png',
+    url: '/#/customer/overview',
   }).catch((err) => console.error('[Push Trigger] Push notification failed:', err.message));
 
   return savedEntry;

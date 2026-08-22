@@ -28,7 +28,25 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/#/customer/overview';
+
   event.waitUntil(
-    clients.openWindow('/customer/overview')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if a client window is already open
+      for (const client of windowClients) {
+        if ('focus' in client) {
+          client.focus();
+          if ('navigate' in client && client.url && !client.url.includes('#/customer/overview')) {
+            client.navigate(targetUrl);
+          }
+          return;
+        }
+      }
+      // If no window is open, open a new one with the HashRouter path
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });
